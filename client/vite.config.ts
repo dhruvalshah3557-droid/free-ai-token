@@ -20,6 +20,7 @@ export default defineConfig(({ mode }) => {
       },
     },
     server: {
+      allowedHosts: ['.monkeycode-ai.live'],
       proxy: {
         // Force IPv4 — on Windows + Node 17+, `localhost` resolves to ::1 first,
         // which can collide with wslrelay / Docker Desktop listeners on the same port.
