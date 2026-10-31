@@ -6,3 +6,31 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+
+  # The root lockfile covers the shared, server, client, and CLI workspaces.
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    groups:
+      compatible-updates:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+
+  # The Electron desktop application has its own independent lockfile.
+  - package-ecosystem: "npm"
+    directory: "/desktop"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    groups:
+      compatible-updates:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
