@@ -34,7 +34,7 @@
     "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^22.0.0",
     "electron": "^38.8.6",
-    "electron-builder": "^25.1.8",
+    "electron-builder": "^26.18.0",
     "esbuild": "^0.28.2",
     "js-yaml": "^4.2.0",
     "typescript": "^5.8.0",
