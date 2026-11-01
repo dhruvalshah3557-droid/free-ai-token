@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ColourDiam Video Studio</title>
+  <style>
+    :root {
+      --bg: #07060a;
+      --card: #121018;
+      --gold: #d4af37;
+      --ink: #f6f1e6;
+      --muted: #b7aa93;
+      --line: #2a261c;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Georgia, "Times New Roman", serif;
+      background:
+        radial-gradient(900px 500px at 15% -10%, #3a2a12 0%, transparent 50%),
+        radial-gradient(700px 400px at 100% 0%, #1a1230 0%, transparent 45%),
+        var(--bg);
+      color: var(--ink);
+    }
+    header, main { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+    header { padding-top: 36px; display: flex; justify-content: space-between; align-items: end; gap: 16px; }
+    .brand { letter-spacing: .28em; font-size: 13px; color: var(--gold); }
+    h1 { margin: 8px 0 0; font-weight: 500; font-size: 42px; }
+    .sub { color: var(--muted); margin-top: 8px; max-width: 520px; }
+    a { color: var(--gold); }
+    .grid { display: grid; grid-template-columns: 1.1fr .9fr; gap: 24px; padding: 32px 0 64px; }
+    .card {
+      background: rgba(18,16,24,.88);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 22px;
+    }
+    label { display: block; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--gold); margin: 14px 0 8px; }
+    select, input, textarea, button {
+      width: 100%;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: #0c0b10;
+      color: var(--ink);
+      padding: 12px 14px;
+      font: 16px/1.4 Georgia, serif;
+    }
+    textarea { min-height: 72px; resize: vertical; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    button {
+      margin-top: 18px;
+      background: var(--gold);
+      color: #111;
+      border: 0;
+      cursor: pointer;
+      font-weight: 700;
+      letter-spacing: .04em;
+    }
+    button:disabled { opacity: .6; cursor: wait; }
+    video { width: 100%; border-radius: 12px; background: #000; min-height: 240px; }
+    .meta { color: var(--muted); font-size: 14px; margin: 10px 0 0; }
+    .list { display: grid; gap: 10px; margin-top: 16px; }
+    .item {
+      display: flex; justify-content: space-between; gap: 12px; align-items: center;
+      border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px;
+    }
+    .status { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--gold); }
+    .error { color: #e08a8a; }
+    @media (max-width: 860px) {
+      .grid, .row, header { grid-template-columns: 1fr; display: block; }
+      h1 { font-size: 32px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <div class="brand">COLOURDIAM</div>
+      <h1>Brand video studio</h1>
+      <p class="sub">Generate short ColourDiam films for rings, pendants, earrings and fancy colour diamonds. Built for <a href="https://www.colourdiam.com" target="_blank" rel="noreferrer">www.colourdiam.com</a>.</p>
+    </div>
+  </header>
+  <main class="grid">
+    <section class="card">
+      <form id="form">
+        <label>Collection</label>
+        <select id="product"></select>
+        <div class="row">
+          <div>
+            <label>Format</label>
+            <select id="size"></select>
+          </div>
+          <div>
+            <label>Duration (seconds)</label>
+            <input id="duration" type="number" min="6" max="20" value="10" />
+          </div>
+        </div>
+        <label>Headline</label>
+        <input id="headline" maxlength="80" />
+        <label>Tagline</label>
+        <textarea id="tagline" maxlength="120"></textarea>
+        <label>Call to action</label>
+        <input id="cta" maxlength="48" value="Shop colourdiam.com" />
+        <button id="go" type="submit">Generate video</button>
+      </form>
+      <p class="meta" id="hint">This renders a branded MP4 locally. Product-photo luxury films still need Runway/Kling plus real jewelry shots.</p>
+    </section>
+    <section class="card">
+      <video id="player" controls playsinline></video>
+      <p class="meta" id="status">Ready. Choose a collection and generate.</p>
+      <div class="list" id="list"></div>
+    </section>
+  </main>
+  <script>
+    const els = {
+      product: document.getElementById("product"),
+      size: document.getElementById("size"),
+      duration: document.getElementById("duration"),
+      headline: document.getElementById("headline"),
+      tagline: document.getElementById("tagline"),
+      cta: document.getElementById("cta"),
+      form: document.getElementById("form"),
+      go: document.getElementById("go"),
+      player: document.getElementById("player"),
+      status: document.getElementById("status"),
+      list: document.getElementById("list"),
+    };
+    let templates = { products: [], sizes: [] };
+
+    function fillDefaults() {
+      const product = templates.products.find((item) => item.id === els.product.value);
+      if (!product) return;
+      els.headline.value = product.headline;
+      els.tagline.value = product.line;
+    }
+
+    async function loadTemplates() {
+      const res = await fetch("/api/templates");
+      templates = await res.json();
+      els.product.innerHTML = templates.products.map((item) => `<option value="${item.id}">${item.label}</option>`).join("");
+      els.size.innerHTML = templates.sizes.map((item) => `<option value="${item.id}">${item.label}</option>`).join("");
+      fillDefaults();
+    }
+
+    async function loadVideos(activeId) {
+      const res = await fetch("/api/videos");
+      const data = await res.json();
+      els.list.innerHTML = (data.videos || []).slice(0, 8).map((job) => `
+        <div class="item">
+          <div>
+            <div>${job.product_label} · ${job.size}</div>
+            <div class="status">${job.status}</div>
+          </div>
+          ${job.status === "ready" ? `<a href="${job.url}" download>Download</a>` : ""}
+        </div>
+      `).join("");
+      const ready = (data.videos || []).find((job) => job.id === activeId && job.status === "ready")
+        || (data.videos || []).find((job) => job.status === "ready");
+      if (ready) els.player.src = ready.url;
+    }
+
+    async function poll(id) {
+      for (let i = 0; i < 40; i += 1) {
+        const res = await fetch(`/api/videos/${id}`);
+        const job = await res.json();
+        els.status.textContent = job.status === "ready"
+          ? `Ready · ${job.width}x${job.height} · ${job.duration}s`
+          : job.status === "failed"
+            ? `Failed: ${job.error || "render error"}`
+            : `Rendering ${job.product_label}...`;
+        if (job.status === "ready") {
+          els.player.src = job.url;
+          els.player.play().catch(() => {});
+          await loadVideos(id);
+          return;
+        }
+        if (job.status === "failed") {
+          els.status.classList.add("error");
+          await loadVideos(id);
+          return;
+        }
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      }
+      els.status.textContent = "Still rendering. Refresh in a moment.";
+    }
+
+    els.product.addEventListener("change", fillDefaults);
+    els.form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      els.status.classList.remove("error");
+      els.go.disabled = true;
+      els.status.textContent = "Queued...";
+      try {
+        const res = await fetch("/api/videos/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            product: els.product.value,
+            size: els.size.value,
+            duration: Number(els.duration.value),
+            headline: els.headline.value,
+            tagline: els.tagline.value,
+            cta: els.cta.value,
+          }),
+        });
+        const job = await res.json();
+        if (!res.ok) throw new Error(job.error || "Could not start render");
+        await poll(job.id);
+      } catch (err) {
+        els.status.classList.add("error");
+        els.status.textContent = err.message;
+      } finally {
+        els.go.disabled = false;
+      }
+    });
+
+    loadTemplates().then(() => loadVideos());
+  </script>
+</body>
+</html>
